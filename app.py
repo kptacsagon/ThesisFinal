@@ -8,7 +8,12 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
+_secret_key = os.environ.get("SECRET_KEY")
+if not _secret_key:
+    import warnings
+    _secret_key = "dev-secret-key-change-in-production"
+    warnings.warn("SECRET_KEY is not set; using insecure default. Set SECRET_KEY in production.", stacklevel=1)
+app.config["SECRET_KEY"] = _secret_key
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///thesis.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
