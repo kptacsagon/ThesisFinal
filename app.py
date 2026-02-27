@@ -104,7 +104,7 @@ class Review(db.Model):
 def create_token(user_id):
     payload = {
         "user_id": user_id,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=24),
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
     }
     return jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
@@ -173,7 +173,7 @@ def register():
     user = User(
         username=username,
         email=email,
-        password_hash=generate_password_hash(password),
+        password_hash=generate_password_hash(password, method="pbkdf2:sha256"),
         role=role,
     )
     db.session.add(user)

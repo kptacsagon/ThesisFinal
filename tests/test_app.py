@@ -1,8 +1,5 @@
 import pytest
 import json
-import os
-
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 from app import app, db
 
