@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thesis Management System</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #3b5bdb;
+      --primary-dark: #2f4ac5;
+      --secondary: #495057;
+      --success: #2f9e44;
+      --danger: #c92a2a;
+      --warning: #e67700;
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --border: #dee2e6;
+      --text: #212529;
+      --muted: #868e96;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Nav */
+    nav { background: var(--primary); color: #fff; padding: .9rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    nav h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: .5px; }
+    nav .nav-right { display: flex; align-items: center; gap: 1rem; font-size: .9rem; }
+    nav button { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4); color: #fff; padding: .4rem .9rem; border-radius: var(--radius); cursor: pointer; font-size: .85rem; }
+    nav button:hover { background: rgba(255,255,255,.3); }
+
+    /* Layout */
+    main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+
+    /* Cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.8rem; margin-bottom: 1.5rem; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 1.2rem; color: var(--secondary); border-bottom: 1px solid var(--border); padding-bottom: .6rem; }
+
+    /* Forms */
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: .35rem; font-size: .85rem; font-weight: 600; color: var(--secondary); }
+    input, textarea, select {
+      width: 100%; padding: .55rem .8rem; border: 1px solid var(--border);
+      border-radius: var(--radius); font-size: .95rem; font-family: inherit;
+      transition: border-color .15s;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
+    textarea { resize: vertical; min-height: 100px; }
+
+    /* Buttons */
+    .btn { display: inline-block; padding: .55rem 1.2rem; border: none; border-radius: var(--radius); font-size: .9rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+    .btn-outline:hover { background: var(--primary); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: .3rem .7rem; font-size: .8rem; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+    .tab { padding: .5rem 1.2rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: .9rem; background: var(--card); }
+    .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* Alert */
+    .alert { padding: .75rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; font-size: .9rem; }
+    .alert-error { background: #fff5f5; color: var(--danger); border: 1px solid #ffc9c9; }
+    .alert-success { background: #ebfbee; color: var(--success); border: 1px solid #b2f2bb; }
+
+    /* Badge */
+    .badge { display: inline-block; padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+    .badge-pending { background: #fff3bf; color: #7c4d00; }
+    .badge-approved { background: #d3f9d8; color: #1b5e20; }
+    .badge-needs_revision { background: #fff0e0; color: #7c4d00; }
+    .badge-rejected { background: #ffe0e0; color: var(--danger); }
+
+    /* Thesis list */
+    .thesis-item { border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem; margin-bottom: .8rem; background: var(--card); display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .thesis-item h3 { font-size: 1rem; margin-bottom: .3rem; }
+    .thesis-meta { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+    .thesis-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+
+    /* Hidden */
+    .hidden { display: none !important; }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+
+    /* User table */
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th, td { text-align: left; padding: .6rem .9rem; border-bottom: 1px solid var(--border); }
+    th { background: var(--bg); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <h1>📚 Thesis Management System</h1>
+  <div class="nav-right">
+    <span id="nav-user" class="hidden"></span>
+    <button id="nav-logout" class="hidden" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<main>
+  <!-- Auth section -->
+  <div id="auth-section">
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('login')">Login</div>
+      <div class="tab" onclick="showTab('register')">Register</div>
+    </div>
+
+    <div id="login-form" class="card">
+      <h2>Login</h2>
+      <div id="login-alert"></div>
+      <div class="form-group"><label>Username</label><input id="login-username" type="text" placeholder="Enter username" /></div>
+      <div class="form-group"><label>Password</label><input id="login-password" type="password" placeholder="Enter password" /></div>
+      <button class="btn btn-primary" onclick="doLogin()">Login</button>
+    </div>
+
+    <div id="register-form" class="card hidden">
+      <h2>Register</h2>
+      <div id="register-alert"></div>
+      <div class="form-group"><label>Username</label><input id="reg-username" type="text" placeholder="Choose a username" /></div>
+      <div class="form-group"><label>Email</label><input id="reg-email" type="email" placeholder="Your email" /></div>
+      <div class="form-group"><label>Password</label><input id="reg-password" type="password" placeholder="Choose a password" /></div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="reg-role">
+          <option value="student">Student</option>
+          <option value="advisor">Advisor</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">Register</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard-section" class="hidden">
+    <div id="dashboard-alert"></div>
+
+    <!-- Student: submit thesis -->
+    <div id="submit-section" class="card hidden">
+      <h2>Submit New Thesis</h2>
+      <div id="submit-alert"></div>
+      <div class="form-group"><label>Title</label><input id="thesis-title" type="text" placeholder="Thesis title" /></div>
+      <div class="form-group"><label>Abstract</label><textarea id="thesis-abstract" placeholder="Brief summary of your thesis"></textarea></div>
+      <div class="form-group"><label>Content</label><textarea id="thesis-content" style="min-height:160px" placeholder="Full thesis content"></textarea></div>
+      <button class="btn btn-primary" onclick="submitThesis()">Submit Thesis</button>
+    </div>
+
+    <!-- Theses list -->
+    <div class="card">
+      <h2>Theses <span id="thesis-count" style="font-size:.8rem;color:var(--muted)"></span></h2>
+      <div id="theses-list">Loading…</div>
+    </div>
+
+    <!-- Admin: user list -->
+    <div id="users-section" class="card hidden">
+      <h2>All Users</h2>
+      <div id="users-list">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Thesis detail modal overlay -->
+  <div id="modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:#fff;border-radius:var(--radius);max-width:700px;width:100%;max-height:90vh;overflow-y:auto;padding:2rem;position:relative;">
+      <button onclick="closeModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);">✕</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const API = "";
+  let token = localStorage.getItem("token");
+  let currentUser = JSON.parse(localStorage.getItem("user") || "null");
+
+  // ---- Init ----
+  if (token && currentUser) showDashboard();
+
+  // ---- Tab switching ----
+  function showTab(tab) {
+    document.querySelectorAll(".tab").forEach((t, i) => t.classList.toggle("active", (i === 0 && tab === "login") || (i === 1 && tab === "register")));
+    document.getElementById("login-form").classList.toggle("hidden", tab !== "login");
+    document.getElementById("register-form").classList.toggle("hidden", tab !== "register");
+  }
+
+  // ---- Helpers ----
+  function setAlert(id, msg, type = "error") {
+    const el = document.getElementById(id);
+    el.innerHTML = msg ? `<div class="alert alert-${type}">${msg}</div>` : "";
+  }
+
+  async function api(path, method = "GET", body = null) {
+    const opts = { method, headers: { "Content-Type": "application/json" } };
+    if (token) opts.headers["Authorization"] = "Bearer " + token;
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  // ---- Auth ----
+  async function doLogin() {
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value;
+    const r = await api("/api/auth/login", "POST", { username, password });
+    if (!r.ok) { setAlert("login-alert", r.data.error); return; }
+    token = r.data.token; currentUser = r.data.user;
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(currentUser));
+    showDashboard();
+  }
+
+  async function doRegister() {
+    const username = document.getElementById("reg-username").value.trim();
+    const email = document.getElementById("reg-email").value.trim();
+    const password = document.getElementById("reg-password").value;
+    const role = document.getElementById("reg-role").value;
+    const r = await api("/api/auth/register", "POST", { username, email, password, role });
+    if (!r.ok) { setAlert("register-alert", r.data.error); return; }
+    token = r.data.token; currentUser = r.data.user;
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(currentUser));
+    showDashboard();
+  }
+
+  function logout() {
+    token = null; currentUser = null;
+    localStorage.removeItem("token"); localStorage.removeItem("user");
+    document.getElementById("auth-section").classList.remove("hidden");
+    document.getElementById("dashboard-section").classList.add("hidden");
+    document.getElementById("nav-user").classList.add("hidden");
+    document.getElementById("nav-logout").classList.add("hidden");
+  }
+
+  // ---- Dashboard ----
+  function showDashboard() {
+    document.getElementById("auth-section").classList.add("hidden");
+    document.getElementById("dashboard-section").classList.remove("hidden");
+    document.getElementById("nav-user").textContent = `${currentUser.username} (${currentUser.role})`;
+    document.getElementById("nav-user").classList.remove("hidden");
+    document.getElementById("nav-logout").classList.remove("hidden");
+
+    if (currentUser.role === "student") {
+      document.getElementById("submit-section").classList.remove("hidden");
+    }
+    if (currentUser.role === "admin") {
+      document.getElementById("users-section").classList.remove("hidden");
+      loadUsers();
+    }
+    loadTheses();
+  }
+
+  async function loadTheses() {
+    const r = await api("/api/theses");
+    if (!r.ok) { setAlert("dashboard-alert", r.data.error); return; }
+    const theses = r.data;
+    document.getElementById("thesis-count").textContent = `(${theses.length})`;
+    const el = document.getElementById("theses-list");
+    if (!theses.length) { el.innerHTML = '<p style="color:var(--muted);font-size:.9rem;">No theses found.</p>'; return; }
+    el.innerHTML = theses.map(t => `
+      <div class="thesis-item">
+        <div style="flex:1">
+          <h3>${esc(t.title)}</h3>
+          <p style="font-size:.85rem;color:var(--secondary);margin:.3rem 0;">${esc(t.abstract.substring(0,120))}${t.abstract.length>120?"…":""}</p>
+          <div class="thesis-meta">By ${esc(t.student_username)} · <span class="badge badge-${t.status}">${t.status.replace("_"," ")}</span> · ${fmtDate(t.submitted_at)}</div>
+        </div>
+        <div class="thesis-actions">
+          <button class="btn btn-outline btn-sm" onclick="viewThesis(${t.id})">View</button>
+          ${currentUser.role==="student" && (t.status==="pending"||t.status==="needs_revision") ? `<button class="btn btn-sm" style="background:#f1f3f5;border:1px solid var(--border)" onclick="editThesis(${t.id})">Edit</button>` : ""}
+          ${(currentUser.role==="advisor"||currentUser.role==="admin") ? `<button class="btn btn-primary btn-sm" onclick="openReview(${t.id})">Review</button>` : ""}
+        </div>
+      </div>`).join("");
+  }
+
+  async function loadUsers() {
+    const r = await api("/api/users");
+    if (!r.ok) return;
+    const el = document.getElementById("users-list");
+    el.innerHTML = `<table><thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead><tbody>
+      ${r.data.map(u=>`<tr><td>${u.id}</td><td>${esc(u.username)}</td><td>${esc(u.email)}</td><td>${u.role}</td><td>${fmtDate(u.created_at)}</td></tr>`).join("")}
+    </tbody></table>`;
+  }
+
+  // ---- Submit thesis ----
+  async function submitThesis() {
+    const title = document.getElementById("thesis-title").value.trim();
+    const abstract = document.getElementById("thesis-abstract").value.trim();
+    const content = document.getElementById("thesis-content").value.trim();
+    const r = await api("/api/theses", "POST", { title, abstract, content });
+    if (!r.ok) { setAlert("submit-alert", r.data.error); return; }
+    setAlert("submit-alert", "Thesis submitted successfully!", "success");
+    document.getElementById("thesis-title").value = "";
+    document.getElementById("thesis-abstract").value = "";
+    document.getElementById("thesis-content").value = "";
+    loadTheses();
+  }
+
+  // ---- View thesis ----
+  async function viewThesis(id) {
+    const r = await api(`/api/theses/${id}`);
+    if (!r.ok) return;
+    const t = r.data;
+    document.getElementById("modal-content").innerHTML = `
+      <h2 style="margin-bottom:.5rem">${esc(t.title)}</h2>
+      <div style="margin-bottom:1rem"><span class="badge badge-${t.status}">${t.status.replace("_"," ")}</span> <span style="color:var(--muted);font-size:.85rem;margin-left:.5rem">by ${esc(t.student_username)}</span></div>
+      <h4 style="margin-bottom:.3rem;color:var(--secondary)">Abstract</h4>
+      <p style="font-size:.9rem;margin-bottom:1rem;line-height:1.6">${esc(t.abstract)}</p>
+      <hr class="divider">
+      <h4 style="margin-bottom:.3rem;color:var(--secondary)">Content</h4>
+      <p style="font-size:.9rem;line-height:1.6;white-space:pre-wrap">${esc(t.content)}</p>
+      <p style="margin-top:1rem;font-size:.8rem;color:var(--muted)">Submitted: ${fmtDate(t.submitted_at)} · Updated: ${fmtDate(t.updated_at)}</p>`;
+    document.getElementById("modal-overlay").classList.remove("hidden");
+  }
+
+  // ---- Edit thesis ----
+  async function editThesis(id) {
+    const r = await api(`/api/theses/${id}`);
+    if (!r.ok) return;
+    const t = r.data;
+    document.getElementById("modal-content").innerHTML = `
+      <h2 style="margin-bottom:1rem">Edit Thesis</h2>
+      <div id="edit-alert"></div>
+      <div class="form-group"><label>Title</label><input id="edit-title" value="${esc(t.title)}" /></div>
+      <div class="form-group"><label>Abstract</label><textarea id="edit-abstract">${esc(t.abstract)}</textarea></div>
+      <div class="form-group"><label>Content</label><textarea id="edit-content" style="min-height:160px">${esc(t.content)}</textarea></div>
+      <button class="btn btn-primary" onclick="saveEdit(${id})">Save Changes</button>`;
+    document.getElementById("modal-overlay").classList.remove("hidden");
+  }
+
+  async function saveEdit(id) {
+    const title = document.getElementById("edit-title").value.trim();
+    const abstract = document.getElementById("edit-abstract").value.trim();
+    const content = document.getElementById("edit-content").value.trim();
+    const r = await api(`/api/theses/${id}`, "PUT", { title, abstract, content });
+    if (!r.ok) { setAlert("edit-alert", r.data.error); return; }
+    closeModal(); loadTheses();
+  }
+
+  // ---- Review ----
+  function openReview(id) {
+    document.getElementById("modal-content").innerHTML = `
+      <h2 style="margin-bottom:1rem">Submit Review</h2>
+      <div id="review-alert"></div>
+      <div class="form-group"><label>Decision</label>
+        <select id="review-decision">
+          <option value="approved">Approved</option>
+          <option value="needs_revision">Needs Revision</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Comment</label><textarea id="review-comment" placeholder="Your feedback…"></textarea></div>
+      <button class="btn btn-primary" onclick="submitReview(${id})">Submit Review</button>`;
+    document.getElementById("modal-overlay").classList.remove("hidden");
+  }
+
+  async function submitReview(id) {
+    const decision = document.getElementById("review-decision").value;
+    const comment = document.getElementById("review-comment").value.trim();
+    const r = await api(`/api/theses/${id}/review`, "POST", { decision, comment });
+    if (!r.ok) { setAlert("review-alert", r.data.error); return; }
+    closeModal(); loadTheses();
+  }
+
+  // ---- Modal ----
+  function closeModal() { document.getElementById("modal-overlay").classList.add("hidden"); }
+  document.getElementById("modal-overlay").addEventListener("click", e => { if (e.target === document.getElementById("modal-overlay")) closeModal(); });
+
+  // ---- Utilities ----
+  function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function fmtDate(iso) { if (!iso) return "—"; const d = new Date(iso); return d.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}); }
+</script>
+</body>
+</html>
